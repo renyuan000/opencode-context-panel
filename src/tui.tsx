@@ -6,6 +6,7 @@ import { isAbsolute, join } from "node:path"
 import type { AssistantMessage } from "@opencode-ai/sdk/v2"
 import type { TuiPlugin, TuiPluginApi, TuiPluginModule, TuiSidebarFileItem } from "@opencode-ai/plugin/tui"
 import { createMemo, createSignal, onCleanup } from "solid-js"
+import { planCost } from "./model-cost"
 import { tokenCostTui } from "./tui-token-cost"
 
 const CONTEXT_ID = "internal:sidebar-context"
@@ -290,7 +291,7 @@ function Panel(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
     for (const message of messages) {
       if (message.role !== "assistant") continue
       const assistant = message as AssistantMessage
-      const cost = Number(assistant.cost ?? 0)
+      const cost = planCost(props.api, assistant)
       if (!Number.isFinite(cost)) continue
       if (assistant.providerID === "opencode-go") equivalentCost += cost
       else actualCost += cost
@@ -309,7 +310,7 @@ function Panel(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
       hit,
       percent: limit > 0 ? Math.round((total / limit) * 100) : 0,
       limit,
-      cost: last?.cost ?? 0,
+      cost: last ? planCost(props.api, last) : 0,
       lastGo: last?.providerID === "opencode-go",
       actualCost,
       equivalentCost,
@@ -331,14 +332,14 @@ function Panel(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
       </text>
       <text fg={theme().textMuted}>
         收 {fmt(data().last?.tokens.output ?? 0)} · 推理 {fmt(data().last?.tokens.reasoning ?? 0)} ·{" "}
-        {data().lastGo ? "Go 配额见侧栏" : money(data().cost)}
+        {data().lastGo ? `Go 套餐折算 ≈${money(data().cost)}` : money(data().cost)}
       </text>
       <text fg={theme().textMuted}>
         模型 {data().last?.providerID ?? "-"}/{data().last?.modelID ?? "-"}
       </text>
       {data().actualCost > 0 ? <text fg={theme().textMuted}>本会话现金 {money(data().actualCost)}</text> : null}
       {data().equivalentCost > 0 ? (
-        <text fg={theme().textMuted}>本会话 Go 估算 {money(data().equivalentCost)}（与 console 可能不一致）</text>
+        <text fg={theme().textMuted}>本会话 Go 套餐折算 ≈{money(data().equivalentCost)}（按 Zen 价格估算）</text>
       ) : null}
       <text fg={theme().text}>
         <b>组成</b>

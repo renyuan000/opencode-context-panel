@@ -2,6 +2,7 @@
 import type { AssistantMessage } from "@opencode-ai/sdk/v2"
 import type { TuiPlugin, TuiPluginModule } from "@opencode-ai/plugin/tui"
 import { createMemo, createSignal } from "solid-js"
+import { planCost } from "./model-cost"
 
 const fmt = (n: number) => {
   if (!Number.isFinite(n) || n <= 0) return "0"
@@ -71,9 +72,10 @@ export const tokenCostTui: TokenCostTui = async (api, options) => {
             const m = msg()
             if (!m) return { text: "", alert: false }
             const t = m.tokens
-            const alert = Number.isFinite(m.cost) && m.cost >= limit
+            const value = planCost(api, m)
+            const alert = Number.isFinite(value) && value >= limit
             const source = m.providerID === "opencode-go" ? "Go" : m.providerID === "opencode" ? "Zen" : m.providerID
-            const cost = m.providerID === "opencode-go" ? "" : ` · ${money(m.cost)}`
+            const cost = ` · ${m.providerID === "opencode-go" ? "≈" : ""}${money(value)}`
             return {
               text: ` [${alert ? "⚠ " : ""}${source} in ${fmt(t.input)} · out ${fmt(t.output)}${cost}] `,
               alert,

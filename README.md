@@ -19,7 +19,7 @@ OpenCode TUI 的上下文管理插件：在侧栏展示 token、缓存命中、�
 
 ## 数据口径
 
-`Context` 面板读取的是**当前会话**的最后一条 assistant 和本会话累计，不是账户月度账单。`opencode`（Zen 按量）和 `opencode-go`（Go 订阅）里的同名模型是两条计费路径：网页 Go 行显示 `$0.00` 表示不额外按量收费，不代表免费额度。Go 的 `AssistantMessage.cost` 与 console 的套餐消耗可能不一致，面板不再把它当作账单金额：侧栏只提示“Go 配额见侧栏”，本会话另显示一个明确标注的估算值。请以 Go 配额百分比和 console 为准；月行会按 `planUsd` 折算 `≈$x/$10`。
+`Context` 面板读取的是**当前会话**的最后一条 assistant 和本会话累计，不是账户月度账单。`opencode`（Zen 按量）和 `opencode-go`（Go 订阅）里的同名模型是两条计费路径：网页 Go 行显示 `$0.00` 表示不额外按量收费，不代表免费额度。Go 的 `AssistantMessage.cost` 使用 Go 折扣价，和 console 的套餐消耗不一致；面板改用同模型 Zen 价格按 token 重算，显示为 `Go 套餐折算 ≈$x`，更接近 console，但仍不是精确账单。精确金额以 console 和 Go 配额百分比为准；月行会按 `planUsd` 折算 `≈$x/$10`。
 
 侧栏 `Go 配额` 是账户级百分比和重置时间；网页 usage 里的请求数、输入/缓存/输出 token 总数属于账户统计，TUI 插件 API 没有暴露，不能用本面板的会话数字去对账。
 
