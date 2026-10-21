@@ -49,12 +49,17 @@ import time
 config_path, *entries = sys.argv[1:]
 
 def ours(item):
-    if item == "opencode-context-panel":
+    spec = item[0] if isinstance(item, list) and item else item
+    if spec == "opencode-context-panel":
         return True
-    if not isinstance(item, str) or "opencode-context-panel" not in item:
+    if not isinstance(spec, str) or "opencode-context-panel" not in spec:
         return False
-    path = item.replace("\\", "/")
+    path = spec.replace("\\", "/")
     return path.endswith("/tui.tsx") or path.endswith("/tui-token-cost.tsx")
+
+def options_of(item):
+    if isinstance(item, list) and len(item) > 1 and isinstance(item[1], dict):
+        return item[1]
 
 if os.path.exists(config_path):
     try:
@@ -78,11 +83,17 @@ plugins = data.get("plugin")
 if not isinstance(plugins, list):
     plugins = []
 
-plugins = [item for item in plugins if not ours(item)]
+kept = []
+options = None
+for item in plugins:
+    if ours(item):
+        if options is None:
+            options = options_of(item)
+        continue
+    kept.append(item)
 for entry in entries:
-    if entry not in plugins:
-        plugins.append(entry)
-data["plugin"] = plugins
+    kept.append([entry, options] if options else entry)
+data["plugin"] = kept
 
 if os.path.exists(config_path):
     backup = f"{config_path}.bak.{time.strftime('%Y%m%d-%H%M%S')}"
