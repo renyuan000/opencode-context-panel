@@ -331,14 +331,14 @@ function Panel(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
       </text>
       <text fg={theme().textMuted}>
         收 {fmt(data().last?.tokens.output ?? 0)} · 推理 {fmt(data().last?.tokens.reasoning ?? 0)} ·{" "}
-        {data().lastGo ? `Go 套餐折算 ${money(data().cost)}` : money(data().cost)}
+        {data().lastGo ? "Go 配额见侧栏" : money(data().cost)}
       </text>
       <text fg={theme().textMuted}>
         模型 {data().last?.providerID ?? "-"}/{data().last?.modelID ?? "-"}
       </text>
-      <text fg={theme().textMuted}>本会话现金 {money(data().actualCost)}</text>
+      {data().actualCost > 0 ? <text fg={theme().textMuted}>本会话现金 {money(data().actualCost)}</text> : null}
       {data().equivalentCost > 0 ? (
-        <text fg={theme().textMuted}>Go 套餐折算 {money(data().equivalentCost)}（非账单）</text>
+        <text fg={theme().textMuted}>本会话 Go 估算 {money(data().equivalentCost)}（与 console 可能不一致）</text>
       ) : null}
       <text fg={theme().text}>
         <b>组成</b>
