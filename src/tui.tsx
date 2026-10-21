@@ -1,4 +1,5 @@
 /** @jsxImportSource @opentui/solid */
+import { execFileSync } from "node:child_process"
 import { statSync } from "node:fs"
 import { mkdir, writeFile } from "node:fs/promises"
 import { homedir } from "node:os"
@@ -289,13 +290,18 @@ function Panel(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
       : undefined
     let actualCost = 0
     let equivalentCost = 0
+    let goCost = 0
     for (const message of messages) {
       if (message.role !== "assistant") continue
       const assistant = message as AssistantMessage
       const cost = planCost(props.api, assistant)
       if (!Number.isFinite(cost)) continue
-      if (assistant.providerID === "opencode-go") equivalentCost += cost
-      else actualCost += cost
+      if (assistant.providerID === "opencode-go") {
+        equivalentCost += cost
+        goCost += Number(assistant.cost ?? 0)
+      } else {
+        actualCost += cost
+      }
     }
     const sent = last ? last.tokens.input + last.tokens.cache.read + last.tokens.cache.write : 0
     const total = last
@@ -305,8 +311,9 @@ function Panel(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
     const limit = model?.limit.context ?? 0
     const lastGo = last?.providerID === "opencode-go"
     const sessionCost = Number(session?.cost ?? 0)
+    const ratio = goCost > 0 ? equivalentCost / goCost : 1
     const fullEquivalentCost =
-      lastGo && actualCost === 0 ? Math.max(equivalentCost, sessionCost * 2) : equivalentCost
+      lastGo && actualCost === 0 ? Math.max(equivalentCost, sessionCost * ratio) : equivalentCost
     const scanResult = scan(props.api, props.session_id)
     return {
       last,
@@ -393,20 +400,98 @@ const FILE_SORT_LABEL: Record<FileSort, string> = { changes: "改动量", time: 
 const nextFileSort = (sort: FileSort): FileSort =>
   sort === "changes" ? "time" : sort === "time" ? "size" : "changes"
 
+type FileRow = TuiSidebarFileItem & {
+  status: string
+  mtime: number
+  size: number
+  changes: number
+}
+
+const normalizeGitPath = (value: string) =>
+  value
+    .split(" -> ")
+    .pop()
+    ?.split(" => ")
+    .pop()
+    ?.trim() ?? value
+
+const readGitFiles = (dir: string): FileRow[] | undefined => {
+  const git = (args: string[]) =>
+    execFileSync("git", ["-c", "safe.directory=*", "-c", "core.quotepath=false", "-C", dir, ...args], {
+      encoding: "utf8",
+      timeout: 5000,
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+  try {
+    const status = git(["status", "--porcelain=v1", "--untracked-files=all"])
+    const stats = new Map<string, { additions: number; deletions: number }>()
+    for (const args of [
+      ["diff", "--numstat"],
+      ["diff", "--cached", "--numstat"],
+    ]) {
+      try {
+        for (const line of git(args).split("\n")) {
+          const [additions, deletions, file] = line.split("\t")
+          if (!file) continue
+          const path = normalizeGitPath(file)
+          const previous = stats.get(path) ?? { additions: 0, deletions: 0 }
+          stats.set(path, {
+            additions: previous.additions + (Number(additions) || 0),
+            deletions: previous.deletions + (Number(deletions) || 0),
+          })
+        }
+      } catch {}
+    }
+    return status
+      .split("\n")
+      .filter((line) => line.trim().length > 0)
+      .map((line) => {
+        const file = normalizeGitPath(line.slice(3))
+        const stat = stats.get(file) ?? { additions: 0, deletions: 0 }
+        return {
+          file,
+          status: line.slice(0, 2).trim() || "M",
+          additions: stat.additions,
+          deletions: stat.deletions,
+          mtime: 0,
+          size: 0,
+          changes: stat.additions + stat.deletions,
+        }
+      })
+      .filter((item) => item.file.length > 0)
+  } catch {
+    return undefined
+  }
+}
+
 function Files(props: { api: TuiPluginApi; session_id: string; tick: () => number }) {
   const theme = () => props.api.theme.current
   const [sort, setSort] = createSignal<FileSort>("changes")
+  let cacheAt = 0
+  let cacheDir = ""
+  let cacheRows: FileRow[] = []
   const rows = createMemo(() => {
     props.tick()
     const session = props.api.state.session.get(props.session_id)
     const dir = session?.directory || props.api.state.path.directory
-    let list: ReadonlyArray<TuiSidebarFileItem> = []
-    try {
-      list = props.api.state.session.diff(props.session_id)
-    } catch {
-      return []
+    if (dir === cacheDir && Date.now() - cacheAt < 2000) return cacheRows
+    let list = readGitFiles(dir)
+    if (!list) {
+      try {
+        list = props.api.state.session.diff(props.session_id).map((item) => ({
+          ...item,
+          status: "M",
+          mtime: 0,
+          size: 0,
+          changes: item.additions + item.deletions,
+        }))
+      } catch {
+        list = []
+      }
     }
-    const items = list.map((item) => {
+    cacheDir = dir
+    cacheAt = Date.now()
+    cacheRows = list.map((item) => {
       let mtime = 0
       let size = 0
       try {
@@ -417,12 +502,12 @@ function Files(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
       return { ...item, mtime, size, changes: item.additions + item.deletions }
     })
     const mode = sort()
-    items.sort((a, b) => {
+    cacheRows.sort((a, b) => {
       const primary =
         mode === "time" ? b.mtime - a.mtime : mode === "size" ? b.size - a.size : b.changes - a.changes
       return primary || a.file.localeCompare(b.file)
     })
-    return items
+    return cacheRows
   })
   const detail = (item: { mtime: number; size: number; changes: number }) =>
     sort() === "time"
@@ -449,7 +534,8 @@ function Files(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
           .slice(0, 10)
           .map((item) => (
             <text fg={theme().textMuted}>
-              <span>{clip(item.file, 26)}</span>{" "}
+              <span>{item.status} </span>
+              <span>{clip(item.file, 24)}</span>{" "}
               <span style={{ fg: theme().success }}>+{item.additions}</span>
               <span style={{ fg: theme().error }}>-{item.deletions}</span>{" "}
               <span>{detail(item)}</span>
