@@ -565,13 +565,18 @@ function Quota(props: { api: TuiPluginApi; session_id: string; options?: Record<
     for (const key of QUOTA_KEYS) {
       const sample = next[key]
       const last = previous.get(key)
-      if (last && sample.percent >= last.percent) {
+      if (!last) {
+        previous.set(key, { percent: sample.percent, at })
+        continue
+      }
+      if (sample.percent > last.percent) {
         const hours = (at - last.at) / 3_600_000
         if (hours > 0) values[key] = (sample.percent - last.percent) / hours
-      } else if (last && sample.percent < last.percent) {
+        previous.set(key, { percent: sample.percent, at })
+      } else if (sample.percent < last.percent) {
         delete values[key]
+        previous.set(key, { percent: sample.percent, at })
       }
-      previous.set(key, { percent: sample.percent, at })
     }
     setRates(values)
   }
@@ -672,7 +677,8 @@ function Quota(props: { api: TuiPluginApi; session_id: string; options?: Record<
             <text fg={color}>
               {QUOTA_LABEL[key]} {bar(window.percent, 100, 8)} {Math.round(window.percent)}% ·{" "}
               {countdown(new Date(window.resetsAt).getTime() - now())}
-              {rate !== undefined ? ` · ${rate.toFixed(1)}%/h` : ""}
+              {" · "}
+              {rate !== undefined ? `${rate.toFixed(1)}%/h` : "速度 —"}
               {key === "monthly" ? ` · ≈$${((planUsd * window.percent) / 100).toFixed(2)}/$${planUsd}` : ""}
             </text>
           )
