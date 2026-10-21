@@ -330,7 +330,8 @@ function Panel(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
         <span style={{ fg: theme().textMuted }}> (点击管理)</span>
       </text>
       <text fg={theme().textMuted}>
-        {fmt(data().total)} tokens · {data().percent}% used
+        本次上下文 {fmt(data().total)} / {data().limit > 0 ? fmt(data().limit) : "?"} tokens · {data().percent}%
+        used
       </text>
       <text fg={theme().textMuted}>
         本次 命中 {data().hit}% ({fmt(data().last?.tokens.cache.read ?? 0)}) · 发 {fmt(data().sent)}
