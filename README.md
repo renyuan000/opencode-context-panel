@@ -17,28 +17,46 @@ OpenCode TUI 的上下文管理插件：在侧栏展示 token、缓存命中、�
 
 ## 安装
 
-### 从 npm
+npm 包暂未发布，当前从 GitHub 安装，不需要 npm 账号。
+
+### 一键安装（Linux / macOS）
 
 ```bash
-opencode plugin opencode-context-panel -g
+git clone https://github.com/renyuan000/opencode-context-panel.git \
+  ~/.config/opencode/packages/opencode-context-panel
+~/.config/opencode/packages/opencode-context-panel/install.sh
 ```
 
-或在全局 `~/.config/opencode/tui.json` 中手动加入：
+`install.sh` 会安装依赖，并自动把插件写进 `~/.config/opencode/tui.json`。如果 `tui.json` 含注释导致无法解析，脚本会先备份，再提示你手动加入。
+
+### 手动安装
+
+```bash
+git clone https://github.com/renyuan000/opencode-context-panel.git \
+  ~/.config/opencode/packages/opencode-context-panel
+cd ~/.config/opencode/packages/opencode-context-panel
+npm install --no-audit --no-fund
+```
+
+编辑 `~/.config/opencode/tui.json`：
 
 ```json
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["opencode-context-panel"]
+  "plugin": ["packages/opencode-context-panel/src/tui.tsx"]
 }
 ```
 
-### 本地开发
+如果相对路径不生效，改成绝对路径，例如 `/home/you/.config/opencode/packages/opencode-context-panel/src/tui.tsx`。
 
-```json
-{
-  "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["/absolute/path/to/opencode-context-panel/src/tui.tsx"]
-}
+重启 OpenCode。
+
+更新：
+
+```bash
+cd ~/.config/opencode/packages/opencode-context-panel
+git pull
+./install.sh
 ```
 
 ## 使用

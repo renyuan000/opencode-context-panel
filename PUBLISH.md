@@ -2,59 +2,43 @@
 
 This package is free and MIT licensed. Sponsorship is optional; see `README.md`.
 
+> npm publishing is currently blocked by npm's anti-bot/Cloudflare checks. GitHub is the supported distribution path; see the manual install section in `README.md`. Do not advertise an npm install command until publishing actually succeeds.
+
 ## 1. Before publishing
 
 - [x] Add your Alipay QR code as `assets/alipay.png` (542x572 PNG, present).
 - [ ] Optional: add Ko-fi / PayPal links for overseas sponsors and update `README.md`.
-- [ ] Confirm the repository name. The metadata currently assumes:
-      `https://github.com/renyuan000/opencode-context-panel`
+- [x] Confirm the repository name: `https://github.com/renyuan000/opencode-context-panel`
 - [x] Run `npm run typecheck`.
-- [x] Run `npm pack --dry-run` and confirm the tarball contains `src/tui.tsx`, `README.md`, `LICENSE`, `package.json`, `assets/alipay.png`.
+- [x] Run `npm pack --dry-run` and confirm the tarball contains `src/tui.tsx`, `install.sh`, `README.md`, `LICENSE`, `package.json`, `assets/alipay.png`.
 
-## 2. Create the GitHub repository
+## 2. GitHub repository
 
-The GitHub CLI needs direct access to GitHub from this VM. If `gh` times out, bypass the WSL proxy for GitHub:
+Already created and pushed:
 
 ```bash
 export NO_PROXY=github.com,api.github.com
-export no_proxy=github.com,api.github.com
-gh auth status
+git remote -v
+git log --oneline -3
 ```
 
-Then create and push:
+## 3. npm (blocked)
+
+Only run this after `npm whoami` succeeds and the account is not blocked:
 
 ```bash
-cd /root/.config/opencode/packages/opencode-context-panel
-git init
-git add .
-git commit -m "feat: initial opencode context panel plugin"
-gh repo create renyuan000/opencode-context-panel --public --source=. --remote=origin --push
-```
-
-Do not commit `node_modules`, tarballs, or local backup files.
-
-## 3. Publish to npm
-
-```bash
-npm login
+npm adduser --registry=https://registry.npmjs.org/
+npm login --auth-type=legacy
 npm whoami
 npm publish
 ```
 
-For an unscoped package, `npm publish` publishes publicly. Verify before running; npm publishes are not easily reversible.
+If npm still reports bot/unusual activity, do not keep retrying. Use a normal network (phone hotspot, no VPN), or wait 24 hours. Until then, keep the README on manual GitHub install.
 
-After publishing:
+## 4. After a successful npm publish
 
-```bash
-npm view opencode-context-panel version
-opencode plugin opencode-context-panel -g
-```
-
-Restart OpenCode and verify the sidebar and `/context`.
-
-## 4. After publishing
-
-- [ ] Add the npm install command and repository link to the README.
+- [ ] Verify `npm view opencode-context-panel version`.
+- [ ] Add the npm install command to the README only after verification.
+- [ ] Test a clean global install and restart OpenCode.
 - [ ] Open a GitHub release/tag matching the npm version.
-- [ ] Test install in a clean config directory.
 - [ ] Keep the local wrapper `~/.config/opencode/plugins/tui-context-panel.tsx` pointing at the package source, or switch it to the npm package.
