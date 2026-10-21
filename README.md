@@ -29,7 +29,7 @@ git clone https://github.com/renyuan000/opencode-context-panel.git \
 ~/.config/opencode/packages/opencode-context-panel/install.sh
 ```
 
-`install.sh` 会安装依赖，并自动把插件写进 `~/.config/opencode/tui.json`。如果 `tui.json` 含注释导致无法解析，脚本会先备份，再提示你手动加入。
+`install.sh` 会安装依赖，并自动把插件写进 `~/.config/opencode/tui.json`。如果 `tui.json` 含注释导致无法解析，脚本会先备份，再提示你手动加入。Context 面板和费用闪烁已经合并在同一个入口，脚本只会写一条路径，并会清理旧的 `tui-token-cost.tsx` 单独条目。
 
 - 需要 `git`，以及 `npm` 或 `bun`；自动改配置需要 `python3`，没有时会打印手动配置片段。
 - 脚本支持 `OPENCODE_CONFIG_DIR` 和 `OPENCODE_TUI_CONFIG` 覆盖默认路径。
@@ -49,14 +49,11 @@ npm install --no-audit --no-fund
 ```json
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": [
-    "packages/opencode-context-panel/src/tui.tsx",
-    "packages/opencode-context-panel/src/tui-token-cost.tsx"
-  ]
+  "plugin": ["packages/opencode-context-panel/src/tui.tsx"]
 }
 ```
 
-如果相对路径不生效，改成绝对路径，例如 `/home/you/.config/opencode/packages/opencode-context-panel/src/tui.tsx` 和同目录下的 `tui-token-cost.tsx`。
+如果相对路径不生效，改成绝对路径，例如 `/home/you/.config/opencode/packages/opencode-context-panel/src/tui.tsx`。
 
 ### 费用闪烁阈值
 
@@ -66,10 +63,10 @@ npm install --no-audit --no-fund
 OPENCODE_COST_WARN_USD=0.2 opencode
 ```
 
-或在 `tui.json` 里把费用插件写成 tuple：
+或在 `tui.json` 里把主插件写成 tuple：
 
 ```json
-["packages/opencode-context-panel/src/tui-token-cost.tsx", { "costWarnUsd": 0.2 }]
+["packages/opencode-context-panel/src/tui.tsx", { "costWarnUsd": 0.2 }]
 ```
 
 重启 OpenCode。

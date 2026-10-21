@@ -1,7 +1,4 @@
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": [
-    "packages/opencode-context-panel/src/tui.tsx",
-    "packages/opencode-context-panel/src/tui-token-cost.tsx"
-  ]
+  "plugin": ["packages/opencode-context-panel/src/tui.tsx"]
 }

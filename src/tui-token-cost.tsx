@@ -33,23 +33,27 @@ const positive = (value: unknown) => {
   return Number.isFinite(n) && n > 0 ? n : undefined
 }
 
-const tui: TuiPlugin = async (api, options) => {
-  try {
-    const limit = positive(options?.costWarnUsd) ?? positive(process.env.OPENCODE_COST_WARN_USD) ?? 0.5
-    const [tick, setTick] = createSignal(0)
-    const [blink, setBlink] = createSignal(true)
-    const bump = () => setTick((value) => value + 1)
-    const blinkTimer = setInterval(() => setBlink((value) => !value), 600)
-    const offs = [
-      api.event.on("message.updated", bump),
-      api.event.on("message.removed", bump),
-      api.event.on("session.updated", bump),
-    ]
-    api.lifecycle.onDispose(() => {
-      clearInterval(blinkTimer)
-      for (const off of offs) off()
-    })
+type TokenCostTui = (api: Parameters<TuiPlugin>[0], options: Parameters<TuiPlugin>[1]) => Promise<void>
 
+export const tokenCostTui: TokenCostTui = async (api, options) => {
+  const limit = positive(options?.costWarnUsd) ?? positive(process.env.OPENCODE_COST_WARN_USD) ?? 0.5
+  const [tick, setTick] = createSignal(0)
+  const [blink, setBlink] = createSignal(true)
+  const bump = () => setTick((value) => value + 1)
+  let blinkTimer: ReturnType<typeof setInterval> | undefined
+  const offs = [
+    api.event.on("message.updated", bump),
+    api.event.on("message.removed", bump),
+    api.event.on("session.updated", bump),
+  ]
+  const cleanup = () => {
+    if (blinkTimer) clearInterval(blinkTimer)
+    blinkTimer = undefined
+    for (const off of offs) off()
+  }
+  api.lifecycle.onDispose(cleanup)
+
+  try {
     api.slots.register({
       order: 100,
       slots: {
@@ -81,14 +85,15 @@ const tui: TuiPlugin = async (api, options) => {
         },
       },
     })
+    blinkTimer = setInterval(() => setBlink((value) => !value), 600)
   } catch {
-    return
+    cleanup()
   }
 }
 
 const plugin: TuiPluginModule & { id: string } = {
   id: "tui-token-cost",
-  tui,
+  tui: tokenCostTui,
 }
 
 export default plugin

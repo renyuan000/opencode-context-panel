@@ -31,7 +31,12 @@ else
   exit 1
 fi
 
-ENTRIES=("$TARGET/src/tui.tsx" "$TARGET/src/tui-token-cost.tsx")
+ENTRY="$TARGET/src/tui.tsx"
+if [ ! -f "$ENTRY" ]; then
+  echo "找不到 $ENTRY，安装中止。" >&2
+  exit 1
+fi
+ENTRIES=("$ENTRY")
 
 if command -v python3 >/dev/null 2>&1; then
   python3 - "$CONFIG_FILE" "${ENTRIES[@]}" <<'PY'
@@ -42,6 +47,15 @@ import sys
 import time
 
 config_path, *entries = sys.argv[1:]
+
+def ours(item):
+    if item == "opencode-context-panel":
+        return True
+    if not isinstance(item, str) or "opencode-context-panel" not in item:
+        return False
+    path = item.replace("\\", "/")
+    return path.endswith("/tui.tsx") or path.endswith("/tui-token-cost.tsx")
+
 if os.path.exists(config_path):
     try:
         with open(config_path, encoding="utf-8") as handle:
@@ -64,7 +78,7 @@ plugins = data.get("plugin")
 if not isinstance(plugins, list):
     plugins = []
 
-plugins = [item for item in plugins if item != "opencode-context-panel"]
+plugins = [item for item in plugins if not ours(item)]
 for entry in entries:
     if entry not in plugins:
         plugins.append(entry)

@@ -6,6 +6,7 @@ import { isAbsolute, join } from "node:path"
 import type { AssistantMessage } from "@opencode-ai/sdk/v2"
 import type { TuiPlugin, TuiPluginApi, TuiPluginModule, TuiSidebarFileItem } from "@opencode-ai/plugin/tui"
 import { createMemo, createSignal, onCleanup } from "solid-js"
+import { tokenCostTui } from "./tui-token-cost"
 
 const CONTEXT_ID = "internal:sidebar-context"
 const FOOTER_ID = "internal:sidebar-footer"
@@ -1329,6 +1330,8 @@ const tui: TuiPlugin = async (api, options) => {
     },
   ])
   if (unregister) unsubs.push(unregister)
+
+  await tokenCostTui(api, options).catch(() => undefined)
 }
 
 const plugin: TuiPluginModule & { id: string } = {
