@@ -10,7 +10,7 @@ This package is free and MIT licensed. Sponsorship is optional; see `README.md`.
 - [ ] Optional: add Ko-fi / PayPal links for overseas sponsors and update `README.md`.
 - [x] Confirm the repository name: `https://github.com/renyuan000/opencode-context-panel`
 - [x] Run `npm run typecheck`.
-- [x] Run `npm pack --dry-run` and confirm the tarball contains `src/tui.tsx`, `install.sh`, `README.md`, `LICENSE`, `package.json`, `assets/alipay.png`.
+- [x] Run `npm pack --dry-run` and confirm the tarball contains `src/tui.tsx`, `src/tui-token-cost.tsx`, `install.sh`, `README.md`, `LICENSE`, `package.json`, `assets/alipay.png`.
 
 ## 2. GitHub repository
 

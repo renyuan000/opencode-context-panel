@@ -4,7 +4,8 @@
   "description": "Context usage panel, token/cost overview, and block-level context management for the OpenCode TUI",
   "type": "module",
   "exports": {
-    "./tui": "./src/tui.tsx"
+    "./tui": "./src/tui.tsx",
+    "./tui-token-cost": "./src/tui-token-cost.tsx"
   },
   "files": [
     "src",

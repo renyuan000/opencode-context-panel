@@ -31,17 +31,17 @@ else
   exit 1
 fi
 
-ENTRY="$TARGET/src/tui.tsx"
+ENTRIES=("$TARGET/src/tui.tsx" "$TARGET/src/tui-token-cost.tsx")
 
 if command -v python3 >/dev/null 2>&1; then
-  python3 - "$CONFIG_FILE" "$ENTRY" <<'PY'
+  python3 - "$CONFIG_FILE" "${ENTRIES[@]}" <<'PY'
 import json
 import os
 import shutil
 import sys
 import time
 
-config_path, entry = sys.argv[1:3]
+config_path, *entries = sys.argv[1:]
 if os.path.exists(config_path):
     try:
         with open(config_path, encoding="utf-8") as handle:
@@ -50,8 +50,9 @@ if os.path.exists(config_path):
         backup = f"{config_path}.bak.{time.strftime('%Y%m%d-%H%M%S')}"
         shutil.copy2(config_path, backup)
         print(f"无法解析 {config_path}（可能含注释），已备份到 {backup}")
-        print("请手动把下面这一项加入 plugin 数组：")
-        print(json.dumps(entry, ensure_ascii=False))
+        print("请手动把下面这些项加入 plugin 数组：")
+        for entry in entries:
+            print(f"  {json.dumps(entry, ensure_ascii=False)}")
         sys.exit(2)
 else:
     data = {"$schema": "https://opencode.ai/tui.json"}
@@ -64,8 +65,9 @@ if not isinstance(plugins, list):
     plugins = []
 
 plugins = [item for item in plugins if item != "opencode-context-panel"]
-if entry not in plugins:
-    plugins.append(entry)
+for entry in entries:
+    if entry not in plugins:
+        plugins.append(entry)
 data["plugin"] = plugins
 
 if os.path.exists(config_path):
@@ -79,11 +81,15 @@ with open(config_path, "w", encoding="utf-8") as handle:
     handle.write("\n")
 
 print(f"已更新 {config_path}")
-print(f"插件路径: {entry}")
+print("插件路径:")
+for entry in entries:
+    print(f"  {entry}")
 PY
 else
   echo "没有 python3，无法自动修改 $CONFIG_FILE。请手动加入："
-  printf '  "plugin": ["%s"]\n' "$ENTRY"
+  for entry in "${ENTRIES[@]}"; do
+    printf '  "%s"\n' "$entry"
+  done
 fi
 
 echo

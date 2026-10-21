@@ -7,6 +7,7 @@ OpenCode TUI 的上下文管理插件：在侧栏展示 token、缓存命中、�
 ## 功能
 
 - 侧栏 `Context` 面板：上下文 token、占用比例、缓存命中、单轮/会话成本、组成估算。
+- 输入框右侧：单次 in/out/cost；单次费用超过阈值时红色闪烁（默认 `$0.50`）。
 - 侧栏 `Go 配额`：5h/周/月百分比、重置倒计时、使用速度（%/h）和条形图；速度在至少两次采样后显示。
 - 侧栏修改文件列表：显示当前会话 `session.diff` 的文件，最多 10 个；点击标题在改动量/时间/大小排序间切换。
 - 免费额度倒计时：按 UTC 00:00 估算下一次重置（Free 模型没有官方查询 API）。
@@ -15,8 +16,6 @@ OpenCode TUI 的上下文管理插件：在侧栏展示 token、缓存命中、�
 - 批量删除完成后会显示结果框；如果区间包含当前最后一轮内容，确认框会提示界面可能变空。
 - 安全限制：当前用户输入只读；系统提示、权限规则、工具/推理/文件块不可删除。
 - 删除前自动备份到本地目录，删除失败不会继续。
-
-> 输入框右侧的单次费用与“超阈值红色闪烁”由单独的本地插件 `plugins/tui-token-cost.tsx` 提供，**当前不包含在本仓库或 npm 包中**。
 
 ## 安装
 
@@ -50,11 +49,28 @@ npm install --no-audit --no-fund
 ```json
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["packages/opencode-context-panel/src/tui.tsx"]
+  "plugin": [
+    "packages/opencode-context-panel/src/tui.tsx",
+    "packages/opencode-context-panel/src/tui-token-cost.tsx"
+  ]
 }
 ```
 
-如果相对路径不生效，改成绝对路径，例如 `/home/you/.config/opencode/packages/opencode-context-panel/src/tui.tsx`。
+如果相对路径不生效，改成绝对路径，例如 `/home/you/.config/opencode/packages/opencode-context-panel/src/tui.tsx` 和同目录下的 `tui-token-cost.tsx`。
+
+### 费用闪烁阈值
+
+默认单次费用达到 `$0.50` 时红色闪烁。改阈值用环境变量：
+
+```bash
+OPENCODE_COST_WARN_USD=0.2 opencode
+```
+
+或在 `tui.json` 里把费用插件写成 tuple：
+
+```json
+["packages/opencode-context-panel/src/tui-token-cost.tsx", { "costWarnUsd": 0.2 }]
+```
 
 重启 OpenCode。
 
@@ -140,7 +156,6 @@ git pull
 - Go 配额接口不是 OpenCode 稳定插件 API，服务端变更可能导致面板失效；速度需要至少两次采样，刚启动时没有速率。
 - 自动切换依赖 `/api/session/{sessionID}/model`，失败时只提示，不会重试。
 - 免费额度重置时间按 UTC 00:00 估算，不是官方返回值；免费额度本身没有查询 API。
-- 输入框费用提醒是单独的本地插件，未包含在本仓库或 npm 包中。
 - 删除备份是明文，且不会自动轮转或清理。
 - 尚未提供自动化测试；发布前请至少运行 `npm run typecheck`。
 
