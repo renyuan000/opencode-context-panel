@@ -1,4 +1,9 @@
 {
   "$schema": "https://opencode.ai/tui.json",
-  "plugin": ["packages/opencode-context-panel/src/tui.tsx"]
+  "plugin": [
+    [
+      "packages/opencode-context-panel/src/tui.tsx",
+      { "pollMs": 30000 }
+    ]
+  ]
 }

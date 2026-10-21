@@ -6,11 +6,15 @@ export const planCost = (api: TuiPluginApi, message: AssistantMessage) => {
   const model = api.state.provider.find((item) => item.id === "opencode")?.models[message.modelID]
   if (!model?.cost) return Number(message.cost ?? 0)
   const tokens = message.tokens
+  const input = tokens.input ?? 0
+  const output = (tokens.output ?? 0) + (tokens.reasoning ?? 0)
+  const cacheRead = tokens.cache?.read ?? 0
+  const cacheWrite = tokens.cache?.write ?? 0
   const value =
-    (tokens.input * model.cost.input +
-      (tokens.output + tokens.reasoning) * model.cost.output +
-      tokens.cache.read * model.cost.cache.read +
-      tokens.cache.write * model.cost.cache.write) /
+    (input * model.cost.input +
+      output * model.cost.output +
+      cacheRead * (model.cost.cache?.read ?? 0) +
+      cacheWrite * (model.cost.cache?.write ?? 0)) /
     1_000_000
   return Number.isFinite(value) ? value : Number(message.cost ?? 0)
 }
