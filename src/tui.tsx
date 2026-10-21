@@ -283,6 +283,7 @@ function Panel(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
     const last = [...messages]
       .reverse()
       .find((item): item is AssistantMessage => item.role === "assistant" && item.tokens?.output > 0)
+    const session = props.api.state.session.get(props.session_id)
     const model = last
       ? props.api.state.provider.find((item) => item.id === last.providerID)?.models[last.modelID]
       : undefined
@@ -302,6 +303,10 @@ function Panel(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
       : 0
     const hit = sent > 0 && last ? Math.round((last.tokens.cache.read / sent) * 100) : 0
     const limit = model?.limit.context ?? 0
+    const lastGo = last?.providerID === "opencode-go"
+    const sessionCost = Number(session?.cost ?? 0)
+    const fullEquivalentCost =
+      lastGo && actualCost === 0 ? Math.max(equivalentCost, sessionCost * 2) : equivalentCost
     const scanResult = scan(props.api, props.session_id)
     return {
       last,
@@ -311,9 +316,9 @@ function Panel(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
       percent: limit > 0 ? Math.round((total / limit) * 100) : 0,
       limit,
       cost: last ? planCost(props.api, last) : 0,
-      lastGo: last?.providerID === "opencode-go",
+      lastGo,
       actualCost,
-      equivalentCost,
+      equivalentCost: fullEquivalentCost,
       ...scanResult,
     }
   })
