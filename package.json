@@ -1,0 +1,55 @@
+{
+  "name": "opencode-context-panel",
+  "version": "0.1.0",
+  "description": "Context usage panel, token/cost overview, and block-level context management for the OpenCode TUI",
+  "type": "module",
+  "exports": {
+    "./tui": "./src/tui.tsx"
+  },
+  "files": [
+    "src",
+    "assets/alipay.png",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "opencode-tui",
+    "tui",
+    "context",
+    "tokens",
+    "solid"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/renyuan000/opencode-context-panel.git"
+  },
+  "homepage": "https://github.com/renyuan000/opencode-context-panel#readme",
+  "bugs": {
+    "url": "https://github.com/renyuan000/opencode-context-panel/issues"
+  },
+  "engines": {
+    "opencode": ">=1.19.3 <2.0.0"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": "^1.19.3",
+    "@opentui/core": ">=0.6.6",
+    "@opentui/solid": ">=0.6.6",
+    "solid-js": ">=1.9.0"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "^1.19.3",
+    "@opencode-ai/sdk": "^1.19.3",
+    "@opentui/core": "^0.6.6",
+    "@opentui/solid": "^0.6.6",
+    "@types/node": "^22.20.5",
+    "solid-js": "^1.9.12",
+    "typescript": "^7.0.2"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "prepack": "npm run typecheck"
+  }
+}
