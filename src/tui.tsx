@@ -282,10 +282,19 @@ function Panel(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
     const last = [...messages]
       .reverse()
       .find((item): item is AssistantMessage => item.role === "assistant" && item.tokens?.output > 0)
-    const session = props.api.state.session.get(props.session_id)
     const model = last
       ? props.api.state.provider.find((item) => item.id === last.providerID)?.models[last.modelID]
       : undefined
+    let actualCost = 0
+    let equivalentCost = 0
+    for (const message of messages) {
+      if (message.role !== "assistant") continue
+      const assistant = message as AssistantMessage
+      const cost = Number(assistant.cost ?? 0)
+      if (!Number.isFinite(cost)) continue
+      if (assistant.providerID === "opencode-go") equivalentCost += cost
+      else actualCost += cost
+    }
     const sent = last ? last.tokens.input + last.tokens.cache.read + last.tokens.cache.write : 0
     const total = last
       ? last.tokens.input + last.tokens.output + last.tokens.reasoning + last.tokens.cache.read + last.tokens.cache.write
@@ -301,7 +310,9 @@ function Panel(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
       percent: limit > 0 ? Math.round((total / limit) * 100) : 0,
       limit,
       cost: last?.cost ?? 0,
-      sessionCost: session?.cost ?? 0,
+      lastGo: last?.providerID === "opencode-go",
+      actualCost,
+      equivalentCost,
       ...scanResult,
     }
   })
@@ -320,12 +331,15 @@ function Panel(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
       </text>
       <text fg={theme().textMuted}>
         收 {fmt(data().last?.tokens.output ?? 0)} · 推理 {fmt(data().last?.tokens.reasoning ?? 0)} ·{" "}
-        {money(data().cost)}
+        {data().lastGo ? `Go 不计费 (等价 ${money(data().cost)})` : money(data().cost)}
       </text>
       <text fg={theme().textMuted}>
         模型 {data().last?.providerID ?? "-"}/{data().last?.modelID ?? "-"}
       </text>
-      <text fg={theme().textMuted}>本会话累计 {money(data().sessionCost)}（不是账户账单）</text>
+      <text fg={theme().textMuted}>
+        本会话实际 {money(data().actualCost)}
+        {data().equivalentCost > 0 ? ` · Go 等价 ${money(data().equivalentCost)}` : ""}（非账单）
+      </text>
       <text fg={theme().text}>
         <b>组成</b>
         <span style={{ fg: theme().textMuted }}> (字符估算)</span>
