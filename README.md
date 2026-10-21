@@ -123,6 +123,7 @@ git pull
 - `fallbackModel`：Go 任一窗口 `status != "ok"` 或达到 `100%` 时切换到的模型，格式 `providerID/modelID`。
 - `autoSwitch`：默认在配置了 `fallbackModel` 时开启；设为 `false` 可关闭。
 - `pollMs`：配额刷新间隔，默认 120000（2 分钟）；最低 30 秒。
+- `planUsd`：Go 套餐金额，默认 10；月行会额外显示按百分比折算的 `≈$x/$planUsd`，这不是 console 的精确账单。
 - `apiKey`：覆盖 Go key；更推荐用环境变量 `OPENCODE_GO_API_KEY`，不要把 key 提交到仓库。
 - `usageUrl`：覆盖查询地址，默认 `https://opencode.ai/zen/go/v1/usage`。
 - 自动切换是单向的：只负责“Go 用尽后切走”，不会在配额重置后自动切回。

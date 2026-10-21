@@ -536,6 +536,7 @@ function Quota(props: { api: TuiPluginApi; session_id: string; options?: Record<
     process.env.OPENCODE_GO_FALLBACK ||
     ""
   const autoSwitch = option("autoSwitch") !== false && Boolean(fallbackRaw)
+  const planUsd = positiveNumber(option("planUsd")) ?? positiveNumber(process.env.OPENCODE_GO_PLAN_USD) ?? 10
   const pollMs = Math.max(
     30000,
     positiveNumber(option("pollMs")) ?? positiveNumber(process.env.OPENCODE_QUOTA_POLL_MS) ?? 120000,
@@ -672,6 +673,7 @@ function Quota(props: { api: TuiPluginApi; session_id: string; options?: Record<
               {QUOTA_LABEL[key]} {bar(window.percent, 100, 8)} {Math.round(window.percent)}% ·{" "}
               {countdown(new Date(window.resetsAt).getTime() - now())}
               {rate !== undefined ? ` · ${rate.toFixed(1)}%/h` : ""}
+              {key === "monthly" ? ` · ≈$${((planUsd * window.percent) / 100).toFixed(2)}/$${planUsd}` : ""}
             </text>
           )
         })
