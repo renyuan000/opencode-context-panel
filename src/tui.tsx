@@ -322,7 +322,10 @@ function Panel(props: { api: TuiPluginApi; session_id: string; tick: () => numbe
         收 {fmt(data().last?.tokens.output ?? 0)} · 推理 {fmt(data().last?.tokens.reasoning ?? 0)} ·{" "}
         {money(data().cost)}
       </text>
-      <text fg={theme().textMuted}>会话累计 {money(data().sessionCost)}</text>
+      <text fg={theme().textMuted}>
+        模型 {data().last?.providerID ?? "-"}/{data().last?.modelID ?? "-"}
+      </text>
+      <text fg={theme().textMuted}>本会话累计 {money(data().sessionCost)}（不是账户账单）</text>
       <text fg={theme().text}>
         <b>组成</b>
         <span style={{ fg: theme().textMuted }}> (字符估算)</span>
@@ -636,7 +639,7 @@ function Quota(props: { api: TuiPluginApi; session_id: string; options?: Record<
     <box gap={0}>
       <text fg={theme().text}>
         <b>Go 配额</b>
-        <span style={{ fg: theme().textMuted }}> ($10 订阅 · 百分比)</span>
+        <span style={{ fg: theme().textMuted }}> (账户级 · 百分比)</span>
       </text>
       {error() ? (
         <text fg={theme().warning}>{error()}</text>

@@ -72,8 +72,9 @@ export const tokenCostTui: TokenCostTui = async (api, options) => {
             if (!m) return { text: "", alert: false }
             const t = m.tokens
             const alert = Number.isFinite(m.cost) && m.cost >= limit
+            const source = m.providerID === "opencode-go" ? "Go" : m.providerID === "opencode" ? "Zen" : m.providerID
             return {
-              text: ` [${alert ? "⚠ " : ""}in ${fmt(t.input)} · out ${fmt(t.output)} · ${money(m.cost)}] `,
+              text: ` [${alert ? "⚠ " : ""}${source} in ${fmt(t.input)} · out ${fmt(t.output)} · ${money(m.cost)}] `,
               alert,
             }
           })
